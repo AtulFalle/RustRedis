@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
+#[derive(Clone)]
 pub struct Value {
     pub data: Vec<u8>,
     pub expires_at: Option<Instant>,
@@ -45,11 +46,16 @@ impl Store {
 
     pub fn cleanup_expired(&mut self) {
         let now = Instant::now();
-        self.data.retain(|_, v| {
-            match v.expires_at {
-                Some(expiry) => expiry > now,
-                None => true,
-            }
+        self.data.retain(|_, v| match v.expires_at {
+            Some(expiry) => expiry > now,
+            None => true,
         });
+    }
+
+    pub fn get_snapshot(&self) -> Vec<(String, Value)> {
+        self.data
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect()
     }
 }

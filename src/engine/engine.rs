@@ -1,21 +1,28 @@
 use std::sync::{Arc, Mutex};
 
 use crate::command::Command;
-use crate::storage::Store;
+use crate::storage::{Aof, Store};
 
 #[derive(Clone)]
 pub struct Engine {
     store: Arc<Mutex<Store>>,
+    aof: Aof,
 }
 
 impl Engine {
-    pub fn new() -> Self {
-        Self {
-            store: Arc::new(Mutex::new(Store::new())),
-        }
+    pub async fn new() -> Result<Self, std::io::Error> {
+        let store = Arc::new(Mutex::new(Store::new()));
+        let aof = Aof::new("appendonly.aof", store.clone()).await?;
+
+        Ok(Self { store, aof })
     }
 
     pub async fn execute(&self, cmd: Command) -> String {
+        // Write to AOF first for persistence
+        if let Err(e) = self.aof.append(&cmd) {
+            eprintln!("Failed to append to AOF: {}", e);
+        }
+
         match cmd {
             Command::Set { key, value } => {
                 let mut store = self.store.lock().unwrap();
@@ -36,5 +43,9 @@ impl Engine {
     pub fn cleanup(&self) {
         let mut store = self.store.lock().unwrap();
         store.cleanup_expired();
+    }
+
+    pub async fn trigger_rewrite(&self) -> Result<(), std::io::Error> {
+        self.aof.rewrite(self.store.clone()).await
     }
 }

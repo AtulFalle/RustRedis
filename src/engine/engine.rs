@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::command::Command;
-use crate::storage::{Store, Aof};
+use crate::storage::{Aof, Store};
 
 #[derive(Clone)]
 pub struct Engine {

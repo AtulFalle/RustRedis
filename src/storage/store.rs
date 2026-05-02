@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
+#[derive(Clone)]
 pub struct Value {
     pub data: Vec<u8>,
     pub expires_at: Option<Instant>,
@@ -51,5 +52,9 @@ impl Store {
                 None => true,
             }
         });
+    }
+
+    pub fn get_snapshot(&self) -> Vec<(String, Value)> {
+        self.data.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
     }
 }

@@ -7,7 +7,7 @@ use tokio::time::{Duration, sleep};
 
 pub async fn start(addr: &str) -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(addr).await?;
-    let engine = Engine::new();
+    let engine = Engine::new().await?;
 
     println!("Server listening on {}", addr);
 
